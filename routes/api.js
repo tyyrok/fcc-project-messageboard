@@ -39,7 +39,7 @@ module.exports = function (app) {
 
   app.route('/api/threads/:board')
     .get(function(req, res) {
-      //console.log(req.params);
+      //console.log(req);
 
       getBoardRecentThreads(req.params.board, res);
 
@@ -47,7 +47,7 @@ module.exports = function (app) {
     .post(function(req, res) {
       //console.log(req.body);
       
-      createNewThread(req.body, res);
+      createNewThread(req.body, res, req.params.board);
 
     })
     .put(function(req, res) {
@@ -109,8 +109,6 @@ module.exports = function (app) {
       const database = client.db('MessageBoard');
       const threads = database.collection('threads');
 
-      //const findThreadById = await threads.findOne( {_id : new ObjectId(query.thread_id) });
-
       const threadWithDeletedReply = await threads.updateOne( 
                                             { _id : new ObjectId(query.thread_id), 
                                               replies: { $elemMatch : {  _id : +query.reply_id, 
@@ -121,7 +119,6 @@ module.exports = function (app) {
                                                                 "elem.delete_password" : query.delete_password } ]
                                             });
       
-      //console.log(threadWithDeletedReply);
 
       if (threadWithDeletedReply.modifiedCount === 1) {
         res.json("success");
@@ -204,7 +201,7 @@ module.exports = function (app) {
       const threadUpdated = await threads.updateOne({ _id: new ObjectId(body.thread_id) },
                                                       updatedThread);
       //console.log(findThreadById);
-      res.redirect(`/b/${board}/${body.thread_id}`);
+      res.redirect(`/b/${board}/${body.thread_id}/`);
       
     } finally {
       await client.close();
@@ -272,11 +269,10 @@ module.exports = function (app) {
     }
   }
 
-  //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-  //Returned will be an array of the most recent 10 bumped threads on the board with only the most recent 3 replies for each. 
   async function getBoardRecentThreads(board, res) {
     try {
       await client.connect();
+      console.log(board);
 
       const database = client.db('MessageBoard');
       const boards = database.collection('boards');
@@ -288,17 +284,21 @@ module.exports = function (app) {
         res.json("Board doesn't exists");
       }
 
-      const options = {
-        projection: { board_id : 0, 
-                      delete_password : 0, 
-                      reported: 0,
-                      replies: {
-                        reported: 0,
-                        delete_password: 0
-                      }
-                    }
-      }
-      const resultThreads = await threads.find({ board_id : board_id._id }, options).toArray();
+      const resultThreads = await threads.aggregate([
+        { $match : { board_id : board_id._id }},
+        { $sort : { "bumped_on" : -1}, },
+        { $set : { replies: { $sortArray: {input: "$replies", sortBy: { created_on: -1 } }}} },
+        
+        { $project : { board_id : 0, 
+          delete_password : 0, 
+          reported: 0,
+          replies: { reported: 0, delete_password: 0,},
+        },},
+        { $addFields: { replycount : { $size : '$replies' } } },
+        { $set : { replies: { $slice : [ '$replies', 3 ] } } },
+  
+      ]).toArray();
+                                          
       //console.log(resultThreads);
       await client.close();
       res.json(resultThreads);
@@ -310,21 +310,24 @@ module.exports = function (app) {
     }
   }
 
-  async function createNewThread(query, res) {
+  async function createNewThread(query, res, boardName) {
     try {
       await client.connect();
       const database = client.db('MessageBoard');
       const boards = database.collection('boards');
       const threads = database.collection('threads');
 
-      const searchQuery = { name : query.board };
+      //let searchQuery = { name : query.board };
+
+      let searchQuery = { name : (query.board ? query.board : boardName) }
+      //console.log(searchQuery, query, boardName);
 
       const board = await boards.findOne(searchQuery);
-      let board_id = board._id;
 
       if (!board) {
         board_id = await createBoard(query.board, query.delete_password, boards);
       }
+      let board_id = board._id;
 
       const doc = {
         text : query.text,
@@ -339,7 +342,7 @@ module.exports = function (app) {
       const result = await threads.insertOne(doc);
       //console.log(result);
 
-      res.redirect(`/b/${query.board}/`);
+      res.redirect(`/b/${searchQuery.name}/`);
 
     } finally {
       await client.close();
