@@ -235,7 +235,7 @@ module.exports = function (app) {
       res.json("reported");
 
     } finally {
-      client.close();
+      await client.close();
     }
   }
 
@@ -280,7 +280,7 @@ module.exports = function (app) {
 
       const board_id = await boards.findOne({ name : board });
       if (!board_id) {
-        client.close();
+        await client.close();
         res.json("Board doesn't exists");
       }
 
@@ -296,6 +296,7 @@ module.exports = function (app) {
         },},
         { $addFields: { replycount : { $size : '$replies' } } },
         { $set : { replies: { $slice : [ '$replies', 3 ] } } },
+        { $limit : 10 },
   
       ]).toArray();
                                           
