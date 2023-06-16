@@ -283,9 +283,9 @@ module.exports = function (app) {
         await client.close();
         res.json("Board doesn't exists");
       }
-
+      console.log("Board_id " + board_id);
       const resultThreads = await threads.aggregate([
-        { $match : { board_id : board_id._id }},
+        { $match : { board_id : board_id?._id }},
         { $sort : { "bumped_on" : -1}, },
         { $set : { replies: { $sortArray: {input: "$replies", sortBy: { created_on: -1 } }}} },
         
@@ -325,10 +325,12 @@ module.exports = function (app) {
 
       const board = await boards.findOne(searchQuery);
 
+      let board_id;
       if (!board) {
         board_id = await createBoard(query.board, query.delete_password, boards);
+      } else {
+        board_id = board._id;
       }
-      let board_id = board._id;
 
       const doc = {
         text : query.text,
