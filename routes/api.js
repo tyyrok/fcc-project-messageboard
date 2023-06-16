@@ -96,7 +96,7 @@ module.exports = function (app) {
                                         { arrayFilters: [ { "elem._id" :  +reply_id } ]} );
       
 
-      res.json("reported");
+      res.send("reported");
 
     } finally {
       await client.close();
@@ -121,9 +121,9 @@ module.exports = function (app) {
       
 
       if (threadWithDeletedReply.modifiedCount === 1) {
-        res.json("success");
+        res.send("success");
       } else {
-        res.json("incorrect password");
+        res.send("incorrect password");
       }
 
     } finally {
@@ -144,6 +144,7 @@ module.exports = function (app) {
                       replies : {
                         thread_id: 0,
                         delete_password: 0,
+                        reported: 0,
                       },
                     }
       };
@@ -232,7 +233,7 @@ module.exports = function (app) {
 
       //console.log(updateResult);
 
-      res.json("reported");
+      res.send("reported");
 
     } finally {
       await client.close();
@@ -250,6 +251,7 @@ module.exports = function (app) {
       const findThreadById = await threads.findOne( {_id : new ObjectId(query.thread_id) });
 
       if (!findThreadById) {
+        console.log("Thread doesn't exists");
         res.json("Thread doesn't exists");
         return true;
       } 
@@ -259,9 +261,9 @@ module.exports = function (app) {
       const deletedThread = await threads.deleteOne(objToDelete);
 
       if (deletedThread.deletedCount === 1) {
-        res.json("success");
+        res.send('success');
       } else {
-        res.json("incorrect password");
+        res.send('incorrect password');
       }
 
     } finally {

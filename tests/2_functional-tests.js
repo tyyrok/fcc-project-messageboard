@@ -20,7 +20,7 @@ suite('Functional Tests', function() {
 
     test('#2 Viewing the 10 most recent threads with 3 replies each: GET request to /api/threads/{board}', (done) => {
         chai.request(server)
-            .keepOpen()
+            //.keepOpen()
             .get('/api/threads/general')
             .end((err, res) => {
                 assert.equal(res.status, 200);
@@ -34,14 +34,14 @@ suite('Functional Tests', function() {
     });
     test('#1 Creating a new thread: POST request to /api/threads/{board}', (done) => {
         chai.request(server)
-            .keepOpen()
+            //.keepOpen()
             .post('/api/threads/general')
             .send({ "text" : "This is the test thread!",
                     "delete_password" : "123", })
             .end((err, res) => {
                 assert.equal(res.status, 200);
                 chai.request(server)
-                    .keepOpen()
+                    //.keepOpen()
                     .get('/api/threads/general')
                     .end((err, res) => {
                         assert.equal(res.status, 200);
@@ -58,7 +58,7 @@ suite('Functional Tests', function() {
     
     test('#3 Deleting a thread with the incorrect password: DELETE request to /api/threads/{board} with an invalid delete_password', (done) => {
         chai.request(server)
-            .keepOpen()
+            //.keepOpen()
             .delete('/api/threads/general')
             .send({
                 thread_id : thread_id,
@@ -66,14 +66,14 @@ suite('Functional Tests', function() {
             })
             .end((err, res) => {
                 assert.equal(res.status, 200);
-                assert.equal(res.type, "application/json");
-                assert.equal(res.body, 'incorrect password')
+                assert.equal(res.type, "text/html");
+                assert.equal(res.text, 'incorrect password')
                 done();
             });
     });
     test('#4 Deleting a thread with the correct password: DELETE request to /api/threads/{board} with a valid delete_password', (done) => {
         chai.request(server)
-            .keepOpen()
+            //.keepOpen()
             .delete('/api/threads/general')
             .send({
                 thread_id : thread_id,
@@ -81,28 +81,29 @@ suite('Functional Tests', function() {
             })
             .end((err, res) => {
                 assert.equal(res.status, 200);
-                assert.equal(res.type, "application/json");
-                assert.equal(res.body, 'success')
+                assert.equal(res.type, "text/html");
+                
+                assert.equal(res.text, 'success')
                 done();
             });
     });
     test('#5 Reporting a thread: PUT request to /api/threads/{board}', (done) => {
         chai.request(server)
-            .keepOpen()
+            //.keepOpen()
             .put('/api/threads/general')
             .send({
                 thread_id : prev_thread_id,
             })
             .end((err, res) => {
                 assert.equal(res.status, 200);
-                assert.equal(res.type, "application/json");
-                assert.equal(res.body, 'reported')
+                assert.equal(res.type, "text/html");
+                assert.equal(res.text, 'reported')
                 done();
             });
     });
     test('#6 Creating a new reply: POST request to /api/replies/{board}', (done) => {
         chai.request(server)
-            .keepOpen()
+            //.keepOpen()
             .post('/api/replies/general')
             .send({
                 thread_id : prev_thread_id,
@@ -112,7 +113,7 @@ suite('Functional Tests', function() {
             .end((err, res) => {
                 assert.equal(res.status, 200);
                 chai.request(server)
-                    .keepOpen()
+                    //.keepOpen()
                     .get('/api/threads/general')
                     .end((err, res) => {
                         assert.equal(res.status, 200);
@@ -128,7 +129,7 @@ suite('Functional Tests', function() {
     });
     test('#7 Viewing a single thread with all replies: GET request to /api/replies/{board}', (done) => {
         chai.request(server)
-            .keepOpen()
+            //.keepOpen()
             .get('/api/replies/general')
             .query({
                 thread_id: prev_thread_id
@@ -141,7 +142,7 @@ suite('Functional Tests', function() {
     });
     test('#8 Deleting a reply with the incorrect password: DELETE request to /api/replies/{board} with an invalid delete_password', (done) => {
         chai.request(server)
-            .keepOpen()
+           // .keepOpen()
             .delete('/api/replies/general')
             .send({
                 thread_id : prev_thread_id,
@@ -150,14 +151,14 @@ suite('Functional Tests', function() {
             })
             .end((err, res) => {
                 assert.equal(res.status, 200);
-                assert.equal(res.type, "application/json");
-                assert.equal(res.body, 'incorrect password')
+                assert.equal(res.type, "text/html");
+                assert.equal(res.text, 'incorrect password')
                 done();
             });
     });
     test('#9 Deleting a reply with the correct password: DELETE request to /api/replies/{board} with a valid delete_password', (done) => {
         chai.request(server)
-            .keepOpen()
+            //.keepOpen()
             .delete('/api/replies/general')
             .send({
                 thread_id : prev_thread_id,
@@ -166,14 +167,14 @@ suite('Functional Tests', function() {
             })
             .end((err, res) => {
                 assert.equal(res.status, 200);
-                assert.equal(res.type, "application/json");
-                assert.equal(res.body, 'success')
+                assert.equal(res.type, "text/html");
+                assert.equal(res.text, 'success')
                 done();
             });
     });
     test('#10 Reporting a reply: PUT request to /api/replies/{board}', (done) => {
         chai.request(server)
-            .keepOpen()
+            //.keepOpen()
             .put('/api/replies/general')
             .send({
                 thread_id : thread_id,
@@ -181,8 +182,8 @@ suite('Functional Tests', function() {
             })
             .end((err, res) => {
                 assert.equal(res.status, 200);
-                assert.equal(res.type, "application/json");
-                assert.equal(res.body, 'reported')
+                assert.equal(res.type, "text/html");
+                assert.equal(res.text, 'reported')
                 done();
             });
     });
