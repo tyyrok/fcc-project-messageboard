@@ -279,11 +279,14 @@ module.exports = function (app) {
       const threads = database.collection('threads');
 
       const board_id = await boards.findOne({ name : board });
+      /*
       if (!board_id) {
         await client.close();
         res.json("Board doesn't exists");
       }
+      */
       console.log("Board_id " + board_id);
+
       const resultThreads = await threads.aggregate([
         { $match : { board_id : board_id?._id }},
         { $sort : { "bumped_on" : -1}, },
@@ -324,14 +327,14 @@ module.exports = function (app) {
       //console.log(searchQuery, query, boardName);
 
       const board = await boards.findOne(searchQuery);
-
+      //console.log("Board while creating thread " + board);
       let board_id;
       if (!board) {
-        board_id = await createBoard(query.board, query.delete_password, boards);
+        board_id = (await boards.insertOne({ name : boardName, })).insertedId;
       } else {
         board_id = board._id;
       }
-
+      //console.log(board_id);
       const doc = {
         text : query.text,
         board_id : board_id,
@@ -351,18 +354,6 @@ module.exports = function (app) {
       await client.close();
     }
     
-  }
-
-  async function createBoard(boardName, collection) {
-    try { 
-      const result = await collection.insertOne({
-                                name : boardName,
-                                });
-      return result.insertedId;
-
-    } catch(err) {
-      console.log(err);
-    } 
   }
 
 };
